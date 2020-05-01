@@ -14,6 +14,8 @@ DRYER_TIME = 4500  # milliseconds
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 FPS = 100 #frames per second
+FAIL_STATE = pygame.USEREVENT + 500
+
 
 def main():
     pygame.init()
@@ -30,6 +32,7 @@ def main():
     clock = pygame.time.Clock()
     washer_images = load_idle_running_finished_images('images/washer')
     washer = Washer(1, (0, 0), washer_images)
+    load_in_out_image = pygame.image.load('images/load_in_out.png').convert_alpha()
     laundry_image = pygame.image.load('images/laundry.png').convert_alpha()
     blank_image = pygame.image.load('images/blank.png').convert_alpha()
     dryer_images = load_idle_running_finished_images('images/dryer')
@@ -39,7 +42,9 @@ def main():
     #cat = AnimatedMachine(1,(700, 450), images)
     player = Player(laundry_image, blank_image)
     new_load = Load()
-    player.add_load(new_load)
+    #player.add_load(new_load)
+    #pile_in = Pile(7, load_in_out_image)
+    #pile_in.add(load = new_load)
     all_sprites = pygame.sprite.Group(washer, dryer, player)  # Creates a sprite group and adds 'player' to it.
     game_logic = GameLogic([], [], player)
 
@@ -158,10 +163,12 @@ class LaundryState(enum.Enum):
     WASHED = 1
     DRIED = 2
 
+
 class MachineState(enum.Enum):
     IDLE = 0
     RUNNING = 1
     FINISHED = 2
+
 
 class AnimatedMachine(pygame.sprite.Sprite):
 
@@ -337,11 +344,13 @@ class Dryer(AnimatedMachine):
             return True
         return False
 
+
 class GameState(enum.Enum):
     QUIT = -1
     TITLE = 0
     NEWGAME = 1
     NEXTLEVEL = 2
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, has_laundry_image, no_has_laundry_image):
@@ -369,6 +378,7 @@ class Player(pygame.sprite.Sprite):
         else:
             self.image = self.image_no_laundry
 
+
 def load_images(path):
     """
     Loads all images in directory. The directory must only contain images.
@@ -385,6 +395,7 @@ def load_images(path):
         images.append(image)
     return images
 
+
 def load_idle_running_finished_images(path):
     idle_path = path + '/idle'
     running_path = path + '/running'
@@ -395,6 +406,47 @@ def load_idle_running_finished_images(path):
     finished = load_images(path=finished_path)
 
     return [idle, running, finished]
+
+
+class AnimatedLoad(pygame.sprite.Sprite):
+    def __init__(self, position, image, load):
+        super().__init__()
+        self.image = image
+        self.position = position
+        self.load = load
+        self.size = (92, 31)
+        self.rect = pygame.Rect(position, self.size)
+
+    def update(self, position):
+        self.position = position
+
+#
+# class Pile(pygame.sprite.Group):
+#     def __init__(self, limit, image):
+#         #whatever init you need to represent a bunch of orders/loads/whatever
+#         self.limit = limit
+#         self.index = 1
+#         self.x = 50
+#         self.height = 31
+#         self.image = image
+#
+#     def add(self, load):
+#         if self.index >= self.limit:
+#             pygame.event.post(FAIL_STATE)
+#         else:
+#             self.index += 1
+#             new_sprite = AnimatedLoad((self.x, self.height*self.index), self.image, load)
+#             super().add(new_sprite)
+#
+#     def remove_load(self, sprite):
+#         if self.has(sprite):
+#             load = sprite.load
+#             self.remove(sprite)
+#             return load
+#
+#     def update_pile(self):
+#         pass
+
 
 if __name__ == "__main__":
     main()
