@@ -16,6 +16,7 @@ SCREEN_HEIGHT = 600
 FPS = 100 #frames per second
 FAIL_STATE = pygame.USEREVENT + 500
 WHITE = (255, 255, 255)
+MACHINE_SIZE = (108, 130)
 
 # TODO: add more washers/dryers
 # TODO: generate loads based on level input and times
@@ -29,21 +30,38 @@ def main():
     pygame.display.set_caption('Laundry Simulator')
     icon = pygame.image.load('images/washer/idle/0.png')
     pygame.display.set_icon(icon)
+
+    # Initializing game essentials
     game_state = GameState.TITLE
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     manager = pygame_gui.UIManager((SCREEN_WIDTH, SCREEN_HEIGHT), 'data/themes/quick_theme.json')
     background = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
     background.fill(manager.ui_theme.get_colour('white'))
-
     clock = pygame.time.Clock()
+
+    # Make washers
     washer_images = load_idle_running_finished_images('images/washer')
-    washer = Washer(1, (0, 0), washer_images)
+    washer_group = pygame.sprite.Group()
+    id = 1
+    for col in range(2):
+        for row in range(2):
+            washer = Washer(id, (MACHINE_SIZE[0]*col, MACHINE_SIZE[1]*row), washer_images)
+            washer_group.add(washer)
+            id += 1
+
+    # Make dryers
+    dryer_images = load_idle_running_finished_images('images/dryer')
+    dryer_group = pygame.sprite.Group()
+    for col in range(2):
+        for row in range(2):
+            dryer = Dryer(id, (round(MACHINE_SIZE[0]*(col+2)), MACHINE_SIZE[1]*row), dryer_images)
+            dryer_group.add(dryer)
+            id += 1
+
     load_in_out_image = pygame.image.load('images/load_in_out.png').convert_alpha()
     free_spot_image = pygame.image.load('images/free_spot.png').convert_alpha()
     laundry_image = pygame.image.load('images/laundry.png').convert_alpha()
     blank_image = pygame.image.load('images/blank.png').convert_alpha()
-    dryer_images = load_idle_running_finished_images('images/dryer')
-    dryer = Dryer(2, (250, 0), dryer_images)
 
     #TODO: make more dynamic/adjustable labels based on position of piles
     font = pygame.font.Font(pygame.font.get_default_font(), 32)
@@ -59,7 +77,7 @@ def main():
     player = Player(laundry_image, blank_image)
     new_load = Load()
     player.add_load(new_load)
-    all_sprites = pygame.sprite.Group(washer, dryer, pile_in, pile_out, player)
+    all_sprites = pygame.sprite.Group(washer_group, dryer_group, pile_in, pile_out, player)
     game_logic = GameLogic([], pile_in, pile_out, player)
 
     running = True
@@ -76,7 +94,7 @@ def main():
             if event.type > pygame.USEREVENT:
                 # need add logic for dealing with machines and other things here
                 id = event.type - pygame.USEREVENT
-                #print(id)
+                print(id)
             if event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                 pass  # for pygame_gui buttons
             manager.process_events(event)
@@ -212,10 +230,8 @@ class AnimatedMachine(pygame.sprite.Sprite):
         """
         super().__init__()
 
-        size = (183, 221)  # This should match the size of the images.
-
         self.state =MachineState.IDLE
-        self.rect = pygame.Rect(position, size)
+        self.rect = pygame.Rect(position, MACHINE_SIZE)
         self.images_idle = images[0]
         self.images_running = images[1]
         self.images_finished = images[2]
@@ -343,7 +359,6 @@ class Washer(AnimatedMachine):
         print(unwashed)
         if self.load is None and (unwashed or washed) and self.state is MachineState.IDLE:
             return True
-
         return False
 
 
@@ -409,7 +424,7 @@ class Player(pygame.sprite.Sprite):
             self.image = self.image_no_laundry
 
 
-def load_images(path):
+def load_images(path, scale = None):
     """
     Loads all images in directory. The directory must only contain images.
 
@@ -422,6 +437,8 @@ def load_images(path):
     images = []
     for file_name in os.listdir(path):
         image = pygame.image.load(path + os.sep + file_name).convert_alpha()
+        if scale:
+            image = pygame.transform.scale(image, scale)
         images.append(image)
     return images
 
@@ -431,9 +448,9 @@ def load_idle_running_finished_images(path):
     running_path = path + '/running'
     finished_path = path + '/finished'
 
-    idle = load_images(path=idle_path)
-    running = load_images(path=running_path)
-    finished = load_images(path=finished_path)
+    idle = load_images(path=idle_path, scale=MACHINE_SIZE)
+    running = load_images(path=running_path, scale=MACHINE_SIZE)
+    finished = load_images(path=finished_path, scale=MACHINE_SIZE)
 
     return [idle, running, finished]
 
@@ -491,7 +508,7 @@ class Pile(pygame.sprite.OrderedUpdates):
         self.type = type
 
         for i in range(size):
-            y = SCREEN_HEIGHT - i*self.height - self.offset*self.height
+            y = SCREEN_HEIGHT - i*self.height - round(self.offset*self.height)
             self.add(AnimatedLoad((self.x_pos, y), occupied_image, empty_image, type))
 
     def update(self):
@@ -501,14 +518,14 @@ class Pile(pygame.sprite.OrderedUpdates):
         for animated_load in self:
             if animated_load.load is not None:
                 print("updating " + str(i))
-                y = SCREEN_HEIGHT - self.height * i - self.offset*self.height
+                y = SCREEN_HEIGHT - self.height * i - round(self.offset*self.height)
                 animated_load.change_pos((self.x_pos, y))
                 i += 1
             else:
                 free_sprites.append(animated_load)
 
         for animated_load in free_sprites:
-            y = SCREEN_HEIGHT - self.height * i - self.offset*self.height
+            y = SCREEN_HEIGHT - self.height * i - round(self.offset*self.height)
             animated_load.change_pos((self.x_pos, y))
             i += 1
 
