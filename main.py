@@ -15,14 +15,13 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 FPS = 100 #frames per second
 FAIL_STATE = pygame.USEREVENT + 500
+WHITE = (255, 255, 255)
 
-# TODO: **commit existing / deal with branches
-# TODO: add labels to pile_in and pile_out
 # TODO: add more washers/dryers
-# TODO: add large washers/dryers / large loads
 # TODO: generate loads based on level input and times
 # TODO: add money/profit text in corner
-
+# TODO: add large washers/dryers / large loads
+# TODO: animation when finish load and/or earn money
 
 def main():
     pygame.init()
@@ -46,8 +45,17 @@ def main():
     dryer_images = load_idle_running_finished_images('images/dryer')
     dryer = Dryer(2, (250, 0), dryer_images)
 
+    #TODO: make more dynamic/adjustable labels based on position of piles
+    font = pygame.font.Font(pygame.font.get_default_font(), 32)
+    pile_in_label = font.render('inbox', True, WHITE)
+    pile_in_rect = pile_in_label.get_rect()
+    pile_in_rect.bottomleft = (10, SCREEN_HEIGHT)
+    pile_out_label = font.render('outbox', True, WHITE)
+    pile_out_rect = pile_out_label.get_rect()
+    pile_out_rect.bottomright = (SCREEN_WIDTH-8, SCREEN_HEIGHT)
+
     pile_in = Pile(10, 7, load_in_out_image, free_spot_image, LaundryState.UNWASHED)
-    pile_out = Pile(SCREEN_WIDTH-100, 7, load_in_out_image, free_spot_image, LaundryState.DRIED)
+    pile_out = Pile(SCREEN_WIDTH-105, 7, load_in_out_image, free_spot_image, LaundryState.DRIED)
     player = Player(laundry_image, blank_image)
     new_load = Load()
     player.add_load(new_load)
@@ -77,6 +85,8 @@ def main():
         manager.update(time_delta)
         screen.blit(background, (0, 0))
         manager.draw_ui(screen)
+        screen.blit(pile_in_label, pile_in_rect)
+        screen.blit(pile_out_label, pile_out_rect)
         all_sprites.draw(screen)
         #pile_in.draw(screen)
         #if selected_load:
@@ -477,27 +487,28 @@ class Pile(pygame.sprite.OrderedUpdates):
         self.size = size
         self.x_pos = x_pos
         self.height = 31
+        self.offset = 2.2
         self.type = type
 
         for i in range(size):
-            y = SCREEN_HEIGHT - i*self.height - 2*self.height
+            y = SCREEN_HEIGHT - i*self.height - self.offset*self.height
             self.add(AnimatedLoad((self.x_pos, y), occupied_image, empty_image, type))
 
     def update(self):
         print("I'm a pile and I'm updating!")
-        i = 1
+        i = 0
         free_sprites = []
         for animated_load in self:
             if animated_load.load is not None:
                 print("updating " + str(i))
-                y = SCREEN_HEIGHT - self.height * i - self.height
+                y = SCREEN_HEIGHT - self.height * i - self.offset*self.height
                 animated_load.change_pos((self.x_pos, y))
                 i += 1
             else:
                 free_sprites.append(animated_load)
 
         for animated_load in free_sprites:
-            y = SCREEN_HEIGHT - self.height * i - self.height
+            y = SCREEN_HEIGHT - self.height * i - self.offset*self.height
             animated_load.change_pos((self.x_pos, y))
             i += 1
 
