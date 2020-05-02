@@ -1,9 +1,8 @@
 import pygame
+from random import random, randint
 
 # Local imports
 import constant as c
-import machine
-
 
 class GameLogic:
     # takes in orders array, adjudicates machine and load clicks, starts first event timer for first load
@@ -20,14 +19,14 @@ class GameLogic:
         time_buffer = 500
         current_time = pygame.time.get_ticks()
         print("current time: " + str(current_time))
-        cycle_time = machine.WASHER_TIME + machine.DRYER_TIME + time_buffer*5
+        cycle_time = c.WASHER_TIME + c.DRYER_TIME + time_buffer*5
         max_ = c.LEVEL_TIME - current_time - cycle_time
         min_ = time_buffer
         range = max_ - min_
 
         if self.orders_array and len(self.orders_array) > 0:
             relative_max = range//len(self.orders_array) + min_
-            random_eta = 3000#randint(min_, relative_max)
+            random_eta = randint(min_, relative_max)
             # TODO: main should tell GameLogicEvent what code to use instead in initialization?
             pygame.time.set_timer(c.GAMELOGICEVENT, random_eta, True)
             print("set timer for: " + str(random_eta))

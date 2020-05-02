@@ -1,24 +1,18 @@
 import enum
 
 # Local imports
-import constant
+import constant as c
 
 
 class Load:
     # single load of laundry
-    def __init__(self, soiled=False, size=constant.Size.NORMAL):
+    def __init__(self, soiled=False, size=c.Size.NORMAL):
         self.soiled = soiled
         self.size = size
-        self.state = LaundryState.UNWASHED
+        self.state = c.LaundryState.UNWASHED
 
     def get_washed(self):
-        self.state = LaundryState.WASHED
+        self.state = c.LaundryState.WASHED
 
     def get_dried(self):
-        self.state = LaundryState.DRIED
-
-
-class LaundryState(enum.Enum):
-    UNWASHED = 0
-    WASHED = 1
-    DRIED = 2
+        self.state = c.LaundryState.DRIED

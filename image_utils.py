@@ -33,3 +33,16 @@ def load_idle_running_finished_images(path, scale):
     finished = load_images(finished_path, scale)
 
     return [idle, running, finished]
+
+def load_laundry_images(path):
+    empty_path = path + '/empty'
+    unwashed_path = path + '/unwashed'
+    washed_path = path + '/washed'
+    dried_path = path + '/dried'
+
+    empty = load_images(empty_path)
+    unwashed = load_images(unwashed_path)
+    washed = load_images(washed_path)
+    dried = load_images(dried_path)
+
+    return [empty, unwashed, washed, dried]

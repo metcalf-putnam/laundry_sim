@@ -1,19 +1,9 @@
 import pygame
-import enum
 
 # Local imports
-import laundry
 import constant as c
 
 MACHINE_SIZE = (108, 130)  # (x,y) in pixels
-WASHER_TIME = 3500  # milliseconds
-DRYER_TIME = 4500  # milliseconds
-
-
-class MachineState(enum.Enum):
-    IDLE = 0
-    RUNNING = 1
-    FINISHED = 2
 
 
 class AnimatedMachine(pygame.sprite.Sprite):
@@ -29,7 +19,7 @@ class AnimatedMachine(pygame.sprite.Sprite):
         """
         super().__init__()
 
-        self.state = MachineState.IDLE
+        self.state = c.MachineState.IDLE
         self.rect = pygame.Rect(position, MACHINE_SIZE)
         self.images_idle = images[0]
         self.images_running = images[1]
@@ -53,20 +43,20 @@ class AnimatedMachine(pygame.sprite.Sprite):
     # TODO: if will start multiple events from machines, need way to keep track of
     # (right now just assuming all events are the loads being finished)
     def handle_event(self):
-        self.state = MachineState.FINISHED
+        self.state = c.MachineState.FINISHED
 
     def add_load(self, load):
-        if self.load is None and self.state is MachineState.IDLE:
+        if self.load is None and self.state is c.MachineState.IDLE:
             self.__start__(load)
             print('load added!')
 
     def remove_load(self):
         # attempt to retrieve load from machine (only possible if done -- may change in future)
         print("I see you want your washed clothes back")
-        if self.state is MachineState.FINISHED:
+        if self.state is c.MachineState.FINISHED:
             load = self.load
             self.load = None
-            self.state = MachineState.IDLE
+            self.state = c.MachineState.IDLE
             print("you may have them back!")
             return load
 
@@ -74,7 +64,7 @@ class AnimatedMachine(pygame.sprite.Sprite):
         self.load = load
 
         pygame.time.set_timer(self.event, self.time, True)  # true == only set once
-        self.state = MachineState.RUNNING
+        self.state = c.MachineState.RUNNING
 
     def update_time_dependent(self, dt):
         """
@@ -83,9 +73,9 @@ class AnimatedMachine(pygame.sprite.Sprite):
         Args:
             dt: Time elapsed between each frame.
         """
-        if self.state is MachineState.IDLE:
+        if self.state is c.MachineState.IDLE:
             images = self.images_idle
-        elif self.state is MachineState.RUNNING:
+        elif self.state is c.MachineState.RUNNING:
             images = self.images_running
         else:
             images = self.images_finished
@@ -98,23 +88,6 @@ class AnimatedMachine(pygame.sprite.Sprite):
             self.index = (self.index + 1) % len(images)
 
         self.image = images[self.index]
-
-    def update_frame_dependent(self):
-        """
-        Updates the image of Sprite every 6 frame (approximately every 0.1 second if frame rate is 60).
-        """
-        if self.velocity.x > 0:  # Use the right images if sprite is moving right.
-            self.images = self.images_right
-        elif self.velocity.x < 0:
-            self.images = self.images_left
-
-        self.current_frame += 1
-        if self.current_frame >= self.animation_frames:
-            self.current_frame = 0
-            self.index = (self.index + 1) % len(self.images)
-            self.image = self.images[self.index]
-
-        self.rect.move_ip(*self.velocity)
 
     def update(self, dt, mouse_pos, mouse_up, game_logic, id):
         """ Updates the mouse_over variable and returns the button's
@@ -134,7 +107,7 @@ class AnimatedMachine(pygame.sprite.Sprite):
 class Washer(AnimatedMachine):
     def __init__(self, id, position, images, size=c.Size.NORMAL):
         super().__init__(id, position, images)
-        self.time = WASHER_TIME
+        self.time = c.WASHER_TIME
 
     # TODO: add custom add_load function that checks if load is not soiled?
 
@@ -144,18 +117,18 @@ class Washer(AnimatedMachine):
         super().handle_event()  # turns off machine
 
     def add_load(self, load):
-        if load.state is laundry.LaundryState.UNWASHED:
+        if load.state is c.LaundryState.UNWASHED:
             super().add_load(load)
-        if load.state is laundry.LaundryState.WASHED and self.load is None:
+        if load.state is c.LaundryState.WASHED and self.load is None:
             print("adding load back for safe keeping")
             self.load = load
-            self.state = MachineState.FINISHED
+            self.state = c.MachineState.FINISHED
 
     def can_hold(self, load):
-        unwashed = load.state is laundry.LaundryState.UNWASHED
-        washed = load.state is laundry.LaundryState.WASHED
+        unwashed = load.state is c.LaundryState.UNWASHED
+        washed = load.state is c.LaundryState.WASHED
         print(unwashed)
-        if self.load is None and (unwashed or washed) and self.state is MachineState.IDLE:
+        if self.load is None and (unwashed or washed) and self.state is c.MachineState.IDLE:
             return True
         return False
 
@@ -166,7 +139,7 @@ class Washer(AnimatedMachine):
 class Dryer(AnimatedMachine):
     def __init__(self, id, position, images, size=c.Size.NORMAL):
         super().__init__(id, position, images)
-        self.time = DRYER_TIME
+        self.time = c.DRYER_TIME
 
     def handle_event(self):
         self.load.get_dried()
@@ -174,15 +147,15 @@ class Dryer(AnimatedMachine):
         super().handle_event()  # turns off machine
 
     def add_load(self, load):
-        if load.state is laundry.LaundryState.WASHED:
+        if load.state is c.LaundryState.WASHED:
             super().add_load(load)
-        if load.state is laundry.LaundryState.DRIED and self.load is None:
+        if load.state is c.LaundryState.DRIED and self.load is None:
             self.load = load
-            self.state = MachineState.FINISHED
+            self.state = c.FINISHED
 
     def can_hold(self, load):
-        washed = load.state is laundry.LaundryState.WASHED
-        dried = load.state is laundry.LaundryState.DRIED
-        if self.load is None and (washed or dried) and self.state is MachineState.IDLE:
+        washed = load.state is c.LaundryState.WASHED
+        dried = load.state is c.LaundryState.DRIED
+        if self.load is None and (washed or dried) and self.state is c.MachineState.IDLE:
             return True
         return False

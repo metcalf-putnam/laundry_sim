@@ -17,7 +17,7 @@ FAIL_STATE = pygame.USEREVENT + 500
 WHITE = (255, 255, 255)
 
 
-
+# TODO: clean up initialization in main()
 # TODO: make outgoing orders get picked up
 # TODO: add money/profit text in corner
 # TODO: add large washers/dryers / large loads
@@ -63,10 +63,8 @@ def main():
             id += 1
 
     # Images for player and laundry piles
-    load_in_out_image = pygame.image.load('images/load_in_out.png').convert_alpha()
-    free_spot_image = pygame.image.load('images/free_spot.png').convert_alpha()
-    laundry_image = pygame.image.load('images/laundry.png').convert_alpha()
-    blank_image = pygame.image.load('images/blank.png').convert_alpha()
+    pile_images = image_utils.load_laundry_images('images/laundry/in_pile')
+    player_images = image_utils.load_laundry_images('images/laundry/in_hand')
 
     # TODO: make more dynamic/adjustable labels based on position of piles
     # Labels for laundry piles
@@ -74,15 +72,15 @@ def main():
     pile_in_label = font.render('inbox', True, WHITE)
     pile_in_rect = pile_in_label.get_rect()
     pile_in_rect.bottomleft = (10, c.SCREEN_HEIGHT)
-    pile_in = pile.Pile(15, 7, load_in_out_image, free_spot_image, laundry.LaundryState.UNWASHED)
+    pile_in = pile.Pile(15, 7, pile_images, c.LaundryState.UNWASHED)
 
     pile_out_label = font.render('outbox', True, WHITE)
     pile_out_rect = pile_out_label.get_rect()
     pile_out_rect.bottomright = (c.SCREEN_WIDTH-8, c.SCREEN_HEIGHT)
-    pile_out = pile.Pile(c.SCREEN_WIDTH-105, 7, load_in_out_image, free_spot_image, laundry.LaundryState.DRIED)
+    pile_out = pile.Pile(c.SCREEN_WIDTH-105, 7, pile_images, c.LaundryState.DRIED)
 
     # Initializing player
-    player_ = player.Player(laundry_image, blank_image)
+    player_ = player.Player(player_images)
 
     # Generating orders
     orders = level_utils.generate_orders(order_num_min=8, order_num_max=8, load_num_min=1, load_num_max=1)

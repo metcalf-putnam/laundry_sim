@@ -6,6 +6,8 @@ SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 GAMELOGICEVENT = pygame.USEREVENT + 100
 LEVEL_TIME = 30_000
+WASHER_TIME = 3500  # milliseconds
+DRYER_TIME = 4500  # milliseconds
 
 
 class PileType(enum.Enum):
@@ -25,3 +27,15 @@ class GameState(enum.Enum):
     TITLE = 0
     NEWGAME = 1
     NEXTLEVEL = 2
+
+
+class LaundryState(enum.Enum):
+    UNWASHED = 0
+    WASHED = 1
+    DRIED = 2
+
+
+class MachineState(enum.Enum):
+    IDLE = 0
+    RUNNING = 1
+    FINISHED = 2
