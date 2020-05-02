@@ -87,7 +87,7 @@ def main():
     #player.add_load(new_load)  #for debug/testing purposes
 
     # Generating orders
-    orders = generate_orders(order_num_min=4, order_num_max=5, load_num_min=1, load_num_max=2)
+    orders = generate_orders(order_num_min=8, order_num_max=8, load_num_min=1, load_num_max=1)
 
     # Storing all sprites to master group
     all_sprites = pygame.sprite.Group(washer_group, dryer_group, pile_in, pile_out, player)
@@ -115,6 +115,8 @@ def main():
 
         # Updating objects
         all_sprites.update(time_delta, pygame.mouse.get_pos(), mouse_up, game_logic, id)
+        pile_in.update_y_pos()
+        pile_out.update_y_pos()
         #manager.update(time_delta)
 
         # Drawing background, sprites, and labels
@@ -150,7 +152,7 @@ class GameLogic:
 
         if self.orders_array and len(self.orders_array) > 0:
             relative_max = range//len(self.orders_array) + min_
-            random_eta = randint(min_, relative_max)
+            random_eta = 3000#randint(min_, relative_max)
             pygame.time.set_timer(GAMELOGICEVENT, random_eta, True)
             print("set timer for: " + str(random_eta))
         else:
@@ -190,8 +192,6 @@ class GameLogic:
             print("elif met!")
             if player_load.state is animated_load.type:
                 animated_load.add_load(self.player.remove_load())
-        #self.pile_in.update_y_pos()
-        #self.pile_out.update_y_pos()
 
 def generate_orders(order_num_min, order_num_max, load_num_min, load_num_max, p_soiled=0.0, p_express=0.0, p_large=0.0):
     # function to set cue of customers for a given level, making it easy to incorporate some amount
@@ -561,6 +561,7 @@ class Pile(pygame.sprite.OrderedUpdates):
         self.offset = 2.2
         self.type = type
         self.free_sprites = pygame.sprite.Group()
+        self.occupied_sprites = pygame.sprite.Group()
 
         for i in range(size):
             y = SCREEN_HEIGHT - i*self.height - round(self.offset*self.height)
@@ -569,19 +570,27 @@ class Pile(pygame.sprite.OrderedUpdates):
             self.free_sprites.add(new_sprite)
 
     def update_y_pos(self):
+        #need to change to use self.check_free_sprites()
         i = 0
-        for animated_load in self:
-            if animated_load.load is not None:
-                y = SCREEN_HEIGHT - self.height * i - round(self.offset*self.height)
-                animated_load.change_pos((self.x_pos, y))
-                self.free_sprites.remove(animated_load)
-                i += 1
-            else:
-                self.free_sprites.add(animated_load)
+        self.check_free_sprites()
+        for animated_load in self.occupied_sprites:
+            y = SCREEN_HEIGHT - self.height * i - round(self.offset*self.height)
+            animated_load.change_pos((self.x_pos, y))
+            i += 1
+
         for animated_load in self.free_sprites:
             y = SCREEN_HEIGHT - self.height * i - round(self.offset*self.height)
             animated_load.change_pos((self.x_pos, y))
             i += 1
+
+    def check_free_sprites(self):
+        for animated_load in self:
+            if animated_load.load is not None:
+                self.free_sprites.remove(animated_load)
+                self.occupied_sprites.add(animated_load)
+            else:
+                self.occupied_sprites.remove(animated_load)
+                self.free_sprites.add(animated_load)
 
     def add_load(self, load):
         if self.free_sprites and len(self.free_sprites) > 0:
@@ -590,13 +599,14 @@ class Pile(pygame.sprite.OrderedUpdates):
                 animated_load.add_load(load)
                 self.free_sprites.remove(animated_load)
                 return
-        self.update_y_pos()
+        else:
+            pygame.event.post(FAIL_STATE)
 
     def add_order(self, order):
-        self.update_y_pos()
+        self.check_free_sprites()
         for load in order.loads:
             self.add_load(load)
-
+        self.update_y_pos()
 
 if __name__ == "__main__":
     main()
