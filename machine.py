@@ -149,9 +149,9 @@ class Dryer(AnimatedMachine):
     def add_load(self, load):
         if load.state is c.LaundryState.WASHED:
             super().add_load(load)
-        if load.state is c.LaundryState.DRIED and self.load is None:
+        elif load.state is c.LaundryState.DRIED and self.load is None:
             self.load = load
-            self.state = c.LaundryState.FINISHED
+            self.state = c.MachineState.FINISHED
 
     def can_hold(self, load):
         washed = load.state is c.LaundryState.WASHED
