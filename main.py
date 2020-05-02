@@ -29,6 +29,9 @@ LEVEL_TIME = 30_000
 def main():
     pygame.init()
 
+    print("USEREVENT: " + str(pygame.USEREVENT))
+    print("NUMEVENTS: " + str(pygame.NUMEVENTS))
+
     # Caption and Icon
     pygame.display.set_caption('Laundry Simulator')
     icon = pygame.image.load('images/washer/idle/0.png')
@@ -83,8 +86,6 @@ def main():
 
     # Initializing player
     player = Player(laundry_image, blank_image)
-    #new_load = Load()
-    #player.add_load(new_load)  #for debug/testing purposes
 
     # Generating orders
     orders = generate_orders(order_num_min=8, order_num_max=8, load_num_min=1, load_num_max=1)
@@ -570,7 +571,6 @@ class Pile(pygame.sprite.OrderedUpdates):
             self.free_sprites.add(new_sprite)
 
     def update_y_pos(self):
-        #need to change to use self.check_free_sprites()
         i = 0
         self.check_free_sprites()
         for animated_load in self.occupied_sprites:
@@ -600,7 +600,7 @@ class Pile(pygame.sprite.OrderedUpdates):
                 self.free_sprites.remove(animated_load)
                 return
         else:
-            pygame.event.post(FAIL_STATE)
+            pygame.event.post(pygame.event.Event(FAIL_STATE))
 
     def add_order(self, order):
         self.check_free_sprites()
