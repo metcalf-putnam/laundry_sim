@@ -17,15 +17,18 @@ FPS = 100 #frames per second
 FAIL_STATE = pygame.USEREVENT + 500
 WHITE = (255, 255, 255)
 MACHINE_SIZE = (108, 130)
+GAMELOGICEVENT = pygame.USEREVENT
+LEVEL_TIME = 30_000
 
-# TODO: add more washers/dryers
-# TODO: generate loads based on level input and times
+# TODO: make outgoing orders get picked up
 # TODO: add money/profit text in corner
 # TODO: add large washers/dryers / large loads
 # TODO: animation when finish load and/or earn money
+# TODO: add level clock and "game over" screen
 
 def main():
     pygame.init()
+
     # Caption and Icon
     pygame.display.set_caption('Laundry Simulator')
     icon = pygame.image.load('images/washer/idle/0.png')
@@ -58,12 +61,14 @@ def main():
             dryer_group.add(dryer)
             id += 1
 
+    # Images for player and laundry piles
     load_in_out_image = pygame.image.load('images/load_in_out.png').convert_alpha()
     free_spot_image = pygame.image.load('images/free_spot.png').convert_alpha()
     laundry_image = pygame.image.load('images/laundry.png').convert_alpha()
     blank_image = pygame.image.load('images/blank.png').convert_alpha()
 
-    #TODO: make more dynamic/adjustable labels based on position of piles
+    # TODO: make more dynamic/adjustable labels based on position of piles
+    # Labels for laundry piles
     font = pygame.font.Font(pygame.font.get_default_font(), 32)
     pile_in_label = font.render('inbox', True, WHITE)
     pile_in_rect = pile_in_label.get_rect()
@@ -72,13 +77,21 @@ def main():
     pile_out_rect = pile_out_label.get_rect()
     pile_out_rect.bottomright = (SCREEN_WIDTH-8, SCREEN_HEIGHT)
 
+    # Initializing input and output laundry piles
     pile_in = Pile(10, 7, load_in_out_image, free_spot_image, LaundryState.UNWASHED)
     pile_out = Pile(SCREEN_WIDTH-105, 7, load_in_out_image, free_spot_image, LaundryState.DRIED)
+
+    # Initializing player
     player = Player(laundry_image, blank_image)
-    new_load = Load()
-    player.add_load(new_load)
+    #new_load = Load()
+    #player.add_load(new_load)  #for debug/testing purposes
+
+    # Generating orders
+    orders = generate_orders(order_num_min=4, order_num_max=5, load_num_min=1, load_num_max=2)
+
+    # Storing all sprites to master group
     all_sprites = pygame.sprite.Group(washer_group, dryer_group, pile_in, pile_out, player)
-    game_logic = GameLogic([], pile_in, pile_out, player)
+    game_logic = GameLogic(orders, pile_in, pile_out, player)
 
     running = True
     while running:
@@ -90,26 +103,28 @@ def main():
                 running = False
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 print("click!!!")
+                print("the current time is: " + str(pygame.time.get_ticks()))
                 mouse_up = True
             if event.type > pygame.USEREVENT:
-                # need add logic for dealing with machines and other things here
                 id = event.type - pygame.USEREVENT
                 print(id)
-            if event.type == pygame.USEREVENT and event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-                pass  # for pygame_gui buttons
-            manager.process_events(event)
+            if event.type == pygame.USEREVENT:
+                print("Ooo! An order!")
+                game_logic.handle_event()
+            manager.process_events(event) # gui manager
 
+        # Updating objects
         all_sprites.update(time_delta, pygame.mouse.get_pos(), mouse_up, game_logic, id)
-        manager.update(time_delta)
+        #manager.update(time_delta)
+
+        # Drawing background, sprites, and labels
         screen.blit(background, (0, 0))
         manager.draw_ui(screen)
         screen.blit(pile_in_label, pile_in_rect)
         screen.blit(pile_out_label, pile_out_rect)
         all_sprites.draw(screen)
-        #pile_in.draw(screen)
-        #if selected_load:
-        #    position = pygame.mouse.get_pos()
-        #    screen.blit(laundry_image, position)
+
+        # Updating display with the latest
         pygame.display.update()
 
 
@@ -122,7 +137,39 @@ class GameLogic:
         self.pile_out = pile_out
         self.player = player
 
+        self.set_timer_for_order()
+
+    def set_timer_for_order(self):
+        time_buffer = 500
+        current_time = pygame.time.get_ticks()
+        print("current time: " + str(current_time))
+        cycle_time = WASHER_TIME + DRYER_TIME + time_buffer*5
+        max_ = LEVEL_TIME - current_time - cycle_time
+        min_ = time_buffer
+        range = max_ - min_
+
+        if self.orders_array and len(self.orders_array) > 0:
+            relative_max = range//len(self.orders_array) + min_
+            random_eta = randint(min_, relative_max)
+            pygame.time.set_timer(GAMELOGICEVENT, random_eta, True)
+            print("set timer for: " + str(random_eta))
+        else:
+            print("that was the last order scheduled!")
+
+    def handle_event(self):
+        print("Hey, that's my event! :D")
+        if self.orders_array and len(self.orders_array) > 0:
+            order = self.orders_array.pop()
+            print("sending an order with " + str(len(order.loads)) + " loads to input pile")
+            self.pile_in.add_order(order)
+            print("orders remainings: " +  str(len(self.orders_array)))
+            self.set_timer_for_order()
+        else:
+            print("I gots no more orders :(")
+        print("current time: " + str(pygame.time.get_ticks()))
+
     def adjudicate_machine_click(self, machine):
+        # Called when player clicks on a machine
         machine_load = machine.load
         player_load = self.player.load
 
@@ -132,21 +179,21 @@ class GameLogic:
             machine.add_load(self.player.remove_load())
 
     def adjudicate_pile_click(self, animated_load):
+        # Called when player clicks on a laundry pile
         player_load = self.player.load
         pile_load = animated_load.load
-
+        print("adjudicator ")
         if pile_load and not player_load:
+            print("if statement met!")
             self.player.add_load(animated_load.remove_load())
-        if player_load and not pile_load:
+        elif player_load and not pile_load:
+            print("elif met!")
             if player_load.state is animated_load.type:
                 animated_load.add_load(self.player.remove_load())
-
-        self.pile_in.update()
-        self.pile_out.update()
-
+        #self.pile_in.update_y_pos()
+        #self.pile_out.update_y_pos()
 
 def generate_orders(order_num_min, order_num_max, load_num_min, load_num_max, p_soiled=0.0, p_express=0.0, p_large=0.0):
-    # Look up pydoc
     # function to set cue of customers for a given level, making it easy to incorporate some amount
     # of randomness to level design
     orders = []
@@ -472,8 +519,11 @@ class AnimatedLoad(pygame.sprite.Sprite):
     def update(self, time_delta, mouse_pos, mouse_up, game_logic, id):
         if self.rect.collidepoint(mouse_pos) and mouse_up:
             # this sprite was clicked
+            print("id: " + str(id))
             game_logic.adjudicate_pile_click(self)
+        self.update_image()
 
+    def update_image(self):
         if self.load is None:
             self.image = self.empty_image
         else:
@@ -484,11 +534,15 @@ class AnimatedLoad(pygame.sprite.Sprite):
 
     def add_load(self, load):
         if self.load is None:
+            print("adding load to pile!")
             self.load = load
+            self.update_image()
 
     def remove_load(self):
         load = self.load
         self.load = None
+        self.update_image()
+        print("removing load from pile!")
         return load
 
 
@@ -506,29 +560,42 @@ class Pile(pygame.sprite.OrderedUpdates):
         self.height = 31
         self.offset = 2.2
         self.type = type
+        self.free_sprites = pygame.sprite.Group()
 
         for i in range(size):
             y = SCREEN_HEIGHT - i*self.height - round(self.offset*self.height)
-            self.add(AnimatedLoad((self.x_pos, y), occupied_image, empty_image, type))
+            new_sprite = AnimatedLoad((self.x_pos, y), occupied_image, empty_image, type)
+            self.add(new_sprite)
+            self.free_sprites.add(new_sprite)
 
-    def update(self):
-        print("I'm a pile and I'm updating!")
+    def update_y_pos(self):
         i = 0
-        free_sprites = []
         for animated_load in self:
             if animated_load.load is not None:
-                print("updating " + str(i))
                 y = SCREEN_HEIGHT - self.height * i - round(self.offset*self.height)
                 animated_load.change_pos((self.x_pos, y))
+                self.free_sprites.remove(animated_load)
                 i += 1
             else:
-                free_sprites.append(animated_load)
-
-        for animated_load in free_sprites:
+                self.free_sprites.add(animated_load)
+        for animated_load in self.free_sprites:
             y = SCREEN_HEIGHT - self.height * i - round(self.offset*self.height)
             animated_load.change_pos((self.x_pos, y))
             i += 1
 
+    def add_load(self, load):
+        if self.free_sprites and len(self.free_sprites) > 0:
+            #TODO: make a more sensical way of grabbing the first free sprite
+            for animated_load in self.free_sprites:
+                animated_load.add_load(load)
+                self.free_sprites.remove(animated_load)
+                return
+        self.update_y_pos()
+
+    def add_order(self, order):
+        self.update_y_pos()
+        for load in order.loads:
+            self.add_load(load)
 
 
 if __name__ == "__main__":
