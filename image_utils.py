@@ -1,8 +1,6 @@
 import os
 import pygame
 
-# Local imports
-import constant as c
 
 def load_images(path, scale = None):
     """
@@ -23,7 +21,7 @@ def load_images(path, scale = None):
     return images
 
 
-def load_idle_running_finished_images(path, scale):
+def load_machine_images(path, scale):
     idle_path = path + '/idle'
     running_path = path + '/running'
     finished_path = path + '/finished'

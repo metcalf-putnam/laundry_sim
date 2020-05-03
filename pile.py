@@ -2,6 +2,8 @@ import pygame
 
 # Local imports
 import constant as c
+import laundry
+
 
 class Pile(pygame.sprite.OrderedUpdates):
     def __init__(self, x_pos, size, pile_images, type):
@@ -17,7 +19,7 @@ class Pile(pygame.sprite.OrderedUpdates):
 
         for i in range(size):
             y = c.SCREEN_HEIGHT - i*self.height - round(self.offset*self.height)
-            new_sprite = AnimatedLoad((self.x_pos, y), pile_images, type)
+            new_sprite = laundry.PilePiece((self.x_pos, y), pile_images, type)
             self.add(new_sprite)
             self.free_sprites.add(new_sprite)
 
@@ -58,64 +60,3 @@ class Pile(pygame.sprite.OrderedUpdates):
         for load in order.loads:
             self.add_load(load)
         self.update_y_pos()
-
-
-class AnimatedLoad(pygame.sprite.Sprite):
-    def __init__(self, position, images, type, load = None):
-        super().__init__()
-        self.empty_images = images[0]
-        self.unwashed_images = images[1]
-        self.washed_images = images[2]
-        self.dried_images = images[3]
-        self.type = type
-        self.animation_time = 0.2
-        self.current_time = 0
-        self.index = 0
-        self.image = self.empty_images[self.index]
-
-        self.load = load
-        self.size = (92, 31)
-        self.rect = pygame.Rect(position, self.size)
-
-    def update(self, time_delta, mouse_pos, mouse_up, game_logic, id):
-        if self.rect.collidepoint(mouse_pos) and mouse_up:
-            # this sprite was clicked
-            print("id: " + str(id))
-            game_logic.adjudicate_pile_click(self)
-        self.update_image(time_delta)
-
-    def update_image(self, dt):
-        if self.load is None:
-            images = self.empty_images
-        else:
-            if self.load.state is c.LaundryState.UNWASHED:
-                images = self.unwashed_images
-            elif self.load.state is c.LaundryState.WASHED:
-                images = self.washed_images
-            else:
-                images = self.dried_images
-
-        self.index = min(self.index, len(images) - 1)
-
-        self.current_time += dt
-        if self.current_time >= self.animation_time:
-            self.current_time = 0
-            self.index = (self.index + 1) % len(images)
-
-        self.image = images[self.index]
-
-    def change_pos(self, pos):
-        self.rect = pygame.Rect(pos, self.size)
-
-    def add_load(self, load):
-        if self.load is None:
-            print("adding load to pile!")
-            self.load = load
-            self.update_image(0)
-
-    def remove_load(self):
-        load = self.load
-        self.load = None
-        self.update_image(0)
-        print("removing load from pile!")
-        return load

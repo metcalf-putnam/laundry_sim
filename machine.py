@@ -133,7 +133,7 @@ class Washer(AnimatedMachine):
         return False
 
 
-# TODO: dryer vs. washer vs. generic machine logic
+# TODO: better dryer vs. washer vs. generic machine logic
 # also, do we want player to be able to take clothes out prematurely? For a bit of a ding to score/profit?
 # What about being able to wash soiled clothes before pre-treatment?
 class Dryer(AnimatedMachine):
