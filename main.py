@@ -10,7 +10,7 @@ import machine
 import laundry
 import game_logic
 
-FPS = 100 #frames per second
+FPS = 100 # frames per second
 FAIL_STATE = pygame.USEREVENT + 500
 WHITE = (255, 255, 255)
 
@@ -76,7 +76,7 @@ def main():
             if event.type > pygame.USEREVENT:
                 id = event.type - pygame.USEREVENT
                 print(id)
-            if event.type == c.GAMELOGICEVENT:
+            if event.type == c.GAME_LOGIC_EVENT:
                 print("Ooo! An order!")
                 logic.handle_event()
 

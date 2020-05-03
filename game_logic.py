@@ -4,6 +4,7 @@ from random import random, randint
 # Local imports
 import constant as c
 
+
 class GameLogic:
     # takes in orders array, adjudicates machine and load clicks, starts first event timer for first load
     # (and then for next one
@@ -12,7 +13,6 @@ class GameLogic:
         self.pile_in = pile_in
         self.pile_out = pile_out
         self.player = player
-
         self.set_timer_for_order()
 
     def set_timer_for_order(self):
@@ -28,7 +28,7 @@ class GameLogic:
             relative_max = range//len(self.orders_array) + min_
             random_eta = randint(min_, relative_max)
             # TODO: main should tell GameLogicEvent what code to use instead in initialization?
-            pygame.time.set_timer(c.GAMELOGICEVENT, random_eta, True)
+            pygame.time.set_timer(c.GAME_LOGIC_EVENT, random_eta, True)
             print("set timer for: " + str(random_eta))
         else:
             print("that was the last order scheduled!")
