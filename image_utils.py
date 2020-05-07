@@ -1,6 +1,9 @@
 import os
 import pygame
 
+#local imports
+import constant as c
+
 
 def load_images(path, scale = None):
     """
@@ -21,6 +24,8 @@ def load_images(path, scale = None):
     return images
 
 
+#COMMENT: instead of returning tuples that need to be interpreted based on position
+# consider using a struct/dict so its more readable.
 def load_machine_images(path, scale):
     idle_path = path + '/idle'
     running_path = path + '/running'
@@ -31,6 +36,7 @@ def load_machine_images(path, scale):
     finished = load_images(finished_path, scale)
 
     return [idle, running, finished]
+
 
 def load_laundry_images(path):
     empty_path = path + '/empty'
@@ -44,3 +50,20 @@ def load_laundry_images(path):
     dried = load_images(dried_path)
 
     return [empty, unwashed, washed, dried]
+
+
+def load_customer_images(path, scale):
+    images_dict = dict()
+    very_angry_path = path + '/very_angry'
+    angry_path = path + '/angry'
+    normal_path = path + '/normal'
+    happy_path = path + '/happy'
+    very_happy_path = path + '/very_happy'
+
+    images_dict[c.CustomerState.VERY_ANGRY] = load_images(very_angry_path, scale)
+    images_dict[c.CustomerState.ANGRY] = load_images(angry_path, scale)
+    images_dict[c.CustomerState.NORMAL] = load_images(normal_path, scale)
+    images_dict[c.CustomerState.HAPPY] = load_images(happy_path, scale)
+    images_dict[c.CustomerState.VERY_HAPPY] = load_images(very_happy_path, scale)
+
+    return images_dict

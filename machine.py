@@ -6,6 +6,7 @@ import constant as c
 MACHINE_SIZE = (108, 130)  # (x,y) in pixels
 
 
+# COMMENT: is there an unanimated machine?
 class AnimatedMachine(pygame.sprite.Sprite):
     # TODO: clean up example code not using
 
@@ -36,7 +37,10 @@ class AnimatedMachine(pygame.sprite.Sprite):
         self.current_frame = 0
 
         self.id = id
+        # COMMENT: why not call it self.time_ms to be clearer
         self.time = 0  # milliseconds
+        # COMMENT: since pygame can only have one timer per event id, it may make sense
+        #  to just call this self.finished_event_id?
         self.event = pygame.USEREVENT + id  # custom event when machine is done
         self.load = None
 
@@ -80,6 +84,8 @@ class AnimatedMachine(pygame.sprite.Sprite):
         else:
             images = self.images_finished
 
+        # COMMENT: you seem to have this animation update logic in the animatedload as well
+        #  perhaps it can be extracted into a helper function?
         self.index = min(self.index, len(images) - 1)
 
         self.current_time += dt
@@ -88,6 +94,7 @@ class AnimatedMachine(pygame.sprite.Sprite):
             self.index = (self.index + 1) % len(images)
 
         self.image = images[self.index]
+
 
     def update(self, dt, mouse_pos, mouse_up, game_logic, id):
         """ Updates the mouse_over variable and returns the button's
@@ -99,9 +106,7 @@ class AnimatedMachine(pygame.sprite.Sprite):
             # this sprite was clicked
             game_logic.adjudicate_machine_click(self)
 
-        # Switch between the two update methods by commenting/uncommenting.
         self.update_time_dependent(dt)
-        # self.update_frame_dependent()
 
 
 class Washer(AnimatedMachine):
@@ -119,7 +124,7 @@ class Washer(AnimatedMachine):
     def add_load(self, load):
         if load.state is c.LaundryState.UNWASHED:
             super().add_load(load)
-        if load.state is c.LaundryState.WASHED and self.load is None:
+        elif load.state is c.LaundryState.WASHED and self.load is None:
             print("adding load back for safe keeping")
             self.load = load
             self.state = c.MachineState.FINISHED
@@ -128,6 +133,7 @@ class Washer(AnimatedMachine):
         unwashed = load.state is c.LaundryState.UNWASHED
         washed = load.state is c.LaundryState.WASHED
         print(unwashed)
+        # COMMENT why not just return self.load is None ... ?
         if self.load is None and (unwashed or washed) and self.state is c.MachineState.IDLE:
             return True
         return False

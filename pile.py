@@ -7,7 +7,6 @@ import laundry
 
 class Pile(pygame.sprite.OrderedUpdates):
     def __init__(self, x_pos, size, pile_images, type):
-        #whatever init you need to represent a bunch of orders/loads/whatever
         super().__init__()
         self.size = size
         self.x_pos = x_pos
@@ -27,6 +26,7 @@ class Pile(pygame.sprite.OrderedUpdates):
         i = 0
         self.check_free_sprites()
         for animated_load in self.occupied_sprites:
+            # Comment: You can store round(self.offset*self.height) into a variable to avoid recomputing it
             y = c.SCREEN_HEIGHT - self.height * i - round(self.offset*self.height)
             animated_load.change_pos((self.x_pos, y))
             i += 1
@@ -46,12 +46,11 @@ class Pile(pygame.sprite.OrderedUpdates):
                 self.free_sprites.add(animated_load)
 
     def add_load(self, load):
-        if self.free_sprites and len(self.free_sprites) > 0:
-            #TODO: make a more sensical way of grabbing the first free sprite
-            for animated_load in self.free_sprites:
-                animated_load.add_load(load)
-                self.free_sprites.remove(animated_load)
-                return
+        if self.free_sprites:
+            next_sprite = next(iter(self.free_sprites))
+            next_sprite.add_load(load)
+            self.free_sprites.remove(next_sprite)
+            self.occupied_sprites.add(next_sprite)
         else:
             pygame.event.post(pygame.event.Event(c.FAIL_STATE))
 
@@ -60,3 +59,16 @@ class Pile(pygame.sprite.OrderedUpdates):
         for load in order.loads:
             self.add_load(load)
         self.update_y_pos()
+
+    def get_order(self, order):
+        num_loads = len(order.loads)
+        count = 0
+        customer_order = pygame.sprite.Group()
+        for pile_piece in self.occupied_sprites:
+            if pile_piece.load in order.loads:
+                print("got one load!")
+                count += 1
+                customer_order.add(pile_piece)
+        if count == num_loads:
+            return customer_order
+        return None

@@ -11,20 +11,21 @@ class Load:
         self.size = size
         self.state = c.LaundryState.UNWASHED
 
-    def get_washed(self):
+    def get_washed(self): #COMMENT: get methods usually imply it does not mutate any state. Perhaps rename to set_washed() ditto for get_dried
         self.state = c.LaundryState.WASHED
 
     def get_dried(self):
         self.state = c.LaundryState.DRIED
 
 
+#COMMENT: why call this AnimatedLoad? Is there an UnanimatedLoad?
 class AnimatedLoad(pygame.sprite.Sprite):
     def __init__(self, position, images, load = None):
         super().__init__()
         self.empty_images = images[0]
         self.unwashed_images = images[1]
         self.washed_images = images[2]
-        self.dried_images = images[3]
+        self.dried_images = images[3] #COMMENT: see note mentioned in image_utils about using a struct/dict
         self.animation_time = 0.2
         self.current_time = 0
         self.index = 0
@@ -91,6 +92,7 @@ class Player(AnimatedLoad):
         super().__init__(position, images)
         self.size = (92, 67)
         self.rect = pygame.Rect(position, self.size)
+        self.score = 0
 
     def update(self, time_delta, mouse_pos, mouse_up, game_logic, id):
         self.change_pos(mouse_pos)
